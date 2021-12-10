@@ -1,0 +1,36 @@
+{% extends 'main/base.html' %}
+
+{% block view_header %}
+<h1>Strona do tworzenia i edytowania wpisów</h1>
+{% endblock %}
+
+{% block content %}
+
+<form method="post" action="/edit/{{item_id}}/" class="form-group">
+    {% csrf_token %}
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger" role="alert">
+                    {{message}}
+                </div>
+            {% endif %}
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success" role="alert">
+                    {{message}}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    <div class="form-group">
+        {{form}}
+    </div>
+    {% if item_id == 0 %}
+        <button type="submit", name="create_new", value="create_new" class="btn btn-success">Dodaj nową książkę</button>
+    {% else %}
+        <button type="submit", name="change_book", value="change_book" class="btn btn-success">Edytuj wybraną książkę</button>
+        <button type="submit", name="delete_book", value="delete_book" class="btn btn-danger ms-3">Usuń książkę</button>
+    {% endif %}
+</form>
+<form method="get" action="/list_of_books/"><button type="submit", class="btn btn-secondary mt-3">Wybierz inną książkę</button></form>
+{% endblock %}

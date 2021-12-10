@@ -1,0 +1,63 @@
+{% extends 'main/base.html' %}
+
+{% block view_header %}
+<h1>Strona do pobierania książek z Google Books</h1>
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+{% for message in messages %}
+    {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <div class="alert alert-danger" role="alert">
+            {{message}}
+        </div>
+    {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <div class="alert alert-success" role="alert">
+            {{message}}
+        </div>
+    {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+    <div class="alert alert-warning" role="alert">
+        {{message}}
+    </div>
+    {% endif %}
+{% endfor %}
+{% endif %}
+<form method="get" class="form-group">
+    <div class="form-group">
+        {{form}}
+    </div>
+    <button type="submit", name="search", value="search" class="btn btn-success my-3">Szukaj ksiązki</button>
+
+
+{% if books_list_cleaned %}
+    <table class="table table-striped table-hover table-bordered align-middle caption-top">
+        <tr>
+            <th>#</th>
+            <th>Tytuł</th>
+            <th>Autor</th>
+            <th>Data publikacji</th>
+            <th>ISBN</th>
+            <th>Liczba stron</th>
+            <th>Link do okładki</th>
+            <th>Język publikacji</th>
+            <th>Dodaj do bazy danych</th>
+        </tr>
+        {% for book in books_list_cleaned %}
+        <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{book.title}}</td>
+            <td>{{book.author}}</td>
+            <td>{{book.publication_date}}</td>
+            <td>{{book.isbn}}</td>
+            <td>{{book.page_count}}</td>
+            <td><div class="card"><a href={{book.front_page_link}} class="btn btn-light stretched-link" target="_blank" rel="noopener noreferrer">Link do okładki</a></div></td>
+            <td>{{book.language}}</td>
+            <td><div class= "row justify-content-center px-3"><button type="submit", name="save_book", value="{{forloop.counter}}" class="btn btn-success">
+                Dodaj książkę</button></div></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+</form>
+{% endblock %}

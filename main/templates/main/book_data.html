@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<h1>Strona z informacjami o książce</h1>
+<table>
+    <tr>
+        <th>Tytuł</th>
+        <th>Autor</th>
+        <th>Data</th>
+        <th>ISBN</th>
+        <th>Liczba stron</th>
+        <th>Link do okładki</th>
+        <th>Język publikacji</th>
+    </tr>
+        <tr>
+            <td>{{book.title}}</td>
+            <td>{{book.author}}</td>
+            <td>{{book.publication_date}}</td>
+            <td>{{book.isbn_nr}}</td>
+            <td>{{book.page_count}}</td>
+            <td><a href={{book.front_page_link}}>{{book.title}} link</a></td>
+            <td>{{book.language}}</td>
+        </tr>
+</table>
+{% endblock %}

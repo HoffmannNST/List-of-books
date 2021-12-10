@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+
+{% block view_header %}
+<h1>Strona z listą książek</h1>
+{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="card card-body mb-3">
+        <div class="">
+        <form method="get">
+                {{my_filter.form}}
+            <button type="submit", name="filter", value="filter" class="btn btn-success mt-3">
+            Wyszukaj</button>
+        </form>
+        </div>
+    </div>
+</div>
+
+<table class="table table-striped table-hover table-bordered align-middle caption-top">
+    <tr class="text-center">
+        <th>#</th>
+        <th>Tytuł</th>
+        <th>Autor</th>
+        <th>Data publikacji</th>
+        <th>ISBN</th>
+        <th>Liczba stron</th>
+        <th>Link do okładki</th>
+        <th>Język publikacji</th>
+        <th>Edycja</th>
+    </tr>
+    {% for item in list.all %}
+    <tr>
+        <td>{{forloop.counter}}</td>
+        <td>{{item.title}}</td>
+        <td>{{item.author}}</td>
+        <td>{{item.publication_date|date:"Y-m-d"}}</td>
+        <td>{{item.isbn}}</td>
+        <td>{{item.page_count}}</td>
+        <td><div class="card"><a href={{item.front_page_link}} class="btn btn-light" target="_blank" rel="noopener noreferrer">Link do okładki</a></div></td>
+        <td>{{item.language}}</td>
+        <td><div class="row justify-content-center px-3"><a href="/edit/{{item.id}}" class="btn btn-primary">Edytuj</a></div></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
