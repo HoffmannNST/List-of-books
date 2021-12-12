@@ -2,6 +2,7 @@ import requests
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 from django.contrib import messages
+from rest_framework.serializers import Serializer
 from .forms import BookHandler, ImportBooks
 from .models import Books
 from .filters import BooksFilter
@@ -9,24 +10,24 @@ from .filters import BooksFilter
 # Create your views here.
 
 
-def book_data(response, item_id):
+def book_data(request, item_id):
     book = Books.objects.get(id=item_id)
-    return render(response, "main/book_data.html", {"book": book})
+    return render(request, "main/book_data.html", {"book": book})
 
 
-def list_of_books(response):
+def list_of_books(request):
     books_list = Books.objects.order_by("title").all()
 
-    my_filter = BooksFilter(response.GET, queryset=books_list)
+    my_filter = BooksFilter(request.GET, queryset=books_list)
     books_list = my_filter.qs
 
     context = {"list": books_list, "my_filter": my_filter}
-    return render(response, "main/list_of_books.html", context)
+    return render(request, "main/list_of_books.html", context)
 
 
-def edit(response, item_id):
-    if response.method == "POST":
-        form = BookHandler(response.POST)
+def edit(request, item_id):
+    if request.method == "POST":
+        form = BookHandler(request.POST)
         if form.is_valid():
             title_var = form.cleaned_data["title"]
             author_var = form.cleaned_data["author"]
@@ -36,7 +37,7 @@ def edit(response, item_id):
             front_page_link_var = form.cleaned_data["front_page_link"]
             language_var = form.cleaned_data["language"]
 
-            if response.POST.get("create_new"):
+            if request.POST.get("create_new"):
                 book = Books(
                     title=title_var,
                     author=author_var,
@@ -47,9 +48,9 @@ def edit(response, item_id):
                     language=language_var,
                 )
                 book.save()
-                messages.success(response, "Pomyślnie dodano nową książkę!")
+                messages.success(request, "Pomyślnie dodano nową książkę!")
 
-            elif response.POST.get("change_book"):
+            elif request.POST.get("change_book"):
                 book = Books(
                     id=item_id,
                     title=title_var,
@@ -61,12 +62,12 @@ def edit(response, item_id):
                     language=language_var,
                 )
                 book.save()
-                messages.success(response, "Pomyślnie edytowano książkę!")
+                messages.success(request, "Pomyślnie edytowano książkę!")
 
-            elif response.POST.get("delete_book"):
+            elif request.POST.get("delete_book"):
                 book = Books.objects.get(id=item_id)
                 book.delete()
-                messages.success(response, "Pomyślnie usunięto książkę!")
+                messages.success(request, "Pomyślnie usunięto książkę!")
                 item_id = 0
 
             return HttpResponseRedirect("/edit/{}/".format(item_id))  # valid
@@ -74,9 +75,9 @@ def edit(response, item_id):
         for errors in form.errors.values():  # validation error messages
             for error in errors:
                 if "au_short" == error:
-                    messages.error(response, "Imię i nazwisko autora są zbyt krótkie!")
+                    messages.error(request, "Imię i nazwisko autora są zbyt krótkie!")
                 elif "pc_small" == error:
-                    messages.error(response, "Liczba stron jest zbyt mała!")
+                    messages.error(request, "Liczba stron jest zbyt mała!")
         return HttpResponseRedirect("/edit/{}/".format(item_id))  # not valid
 
     else:
@@ -95,18 +96,18 @@ def edit(response, item_id):
                     "language": book.language,
                 }
             )
-        return render(response, "main/edit.html", {"form": form, "item_id": item_id})
+        return render(request, "main/edit.html", {"form": form, "item_id": item_id})
 
 
-def import_books(response):
-    if response.method == "GET":
-        form = ImportBooks(response.GET)
+def import_books(request):
+    if request.method == "GET":
+        form = ImportBooks(request.GET)
         if form.is_valid():  # if search form is valid search for books
             import_key_words = form.cleaned_data["import_key_words"]
             params = {"q": import_key_words}
             volumes_link = "https://www.googleapis.com/books/v1/volumes"
-            api_response = requests.get(volumes_link, params)
-            books_list = api_response.json()["items"]  # list with all info from api
+            api_request = requests.get(volumes_link, params)
+            books_list = api_request.json()["items"]  # list with all info from api
             books_list_cleaned = []  # list for needed info only
 
             for item in books_list:  # get needed info only
@@ -150,14 +151,14 @@ def import_books(response):
                     }
                 )
 
-            if response.GET.get("search"):  # only search for books
+            if request.GET.get("search"):  # only search for books
                 return render(
-                    response,
+                    request,
                     "main/import_books.html",
                     {"form": form, "books_list_cleaned": books_list_cleaned},
                 )
-            elif response.GET.get("save_book"):  # save selected book
-                book_index = int(response.GET.get("save_book")) - 1
+            elif request.GET.get("save_book"):  # save selected book
+                book_index = int(request.GET.get("save_book")) - 1
                 title_var = books_list_cleaned[book_index]["title"]
                 author_var = books_list_cleaned[book_index]["author"]
                 publication_date_var = books_list_cleaned[book_index][
@@ -169,7 +170,7 @@ def import_books(response):
                 language_var = books_list_cleaned[book_index]["language"]
                 try:
                     _ = Books.objects.get(isbn=isbn_var)
-                    messages.warning(response, "Wybrana książka jest już zapisana!")
+                    messages.warning(request, "Wybrana książka jest już zapisana!")
                 except:
                     try:
                         book = Books(
@@ -183,19 +184,51 @@ def import_books(response):
                         )
                         book.save()
                         messages.success(
-                            response,
+                            request,
                             'Pomyślnie dodano książkę "{}" {}!'.format(
                                 title_var, author_var
                             ),
                         )
                     except:
-                        messages.error(response, "Nie udało się dodać książki!")
+                        messages.error(request, "Nie udało się dodać książki!")
                 return render(
-                    response,
+                    request,
                     "main/import_books.html",
                     {"form": form, "books_list_cleaned": books_list_cleaned},
                 )
         else:
-            print(response)
             form = ImportBooks()
-            return render(response, "main/import_books.html", {"form": form})
+            return render(request, "main/import_books.html", {"form": form})
+
+
+# from rest_framework import viewsets
+# from .serializers import BooksSerializer
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import BooksSerializer
+
+# class HeroViewSet(viewsets.ModelViewSet):
+#     def get(self, request)
+#     queryset = Books.objects.all().order_by('title')
+#     serializer_class = BooksSerializer
+
+
+@api_view(["GET"])
+def apiOverview(request):
+    api_urls = {"List": "/book-list/", "Detail View": "/book-detail/<str:pk>/"}
+    return Response(api_urls)
+
+
+@api_view(["GET"])
+def bookList(request):
+    books = Books.objects.all().order_by("title")
+    serializer = BooksSerializer(books, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def bookDetail(request, pk):
+    books = Books.objects.get(id=pk)
+    serializer = BooksSerializer(books, many=False)
+    print(serializer.data)
+    return Response(serializer.data)

@@ -1,13 +1,13 @@
-from django.forms.widgets import TextInput
 import django_filters
 from django import forms
 from .models import Books
-from django_filters import NumberFilter, CharFilter, DateFilter
+from django_filters import CharFilter, DateFilter
 
 
 class BooksFilter(django_filters.FilterSet):
     title = CharFilter(
         field_name="title",
+        lookup_expr="contains",
         label="Tytuł",
         widget=forms.TextInput(
             attrs={
@@ -20,6 +20,7 @@ class BooksFilter(django_filters.FilterSet):
 
     author = CharFilter(
         field_name="author",
+        lookup_expr="contains",
         label="Autor",
         widget=forms.TextInput(
             attrs={
@@ -32,6 +33,7 @@ class BooksFilter(django_filters.FilterSet):
 
     language = CharFilter(
         field_name="language",
+        lookup_expr="contains",
         label="Język",
         widget=forms.TextInput(
             attrs={
