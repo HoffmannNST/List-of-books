@@ -228,22 +228,30 @@ def bookList(request):
 
 @api_view(["GET"])
 def bookDetail(request):
-    print("\n", request.GET)
-    print(request.GET.get("id"), "\n")
-    print(request.GET.get("title"), "\n")
     books = Books.objects.all()
-    if request.GET.get("title"):
-        title = request.GET.get("title")
-        books = books.filter(title__contains=title)
-    if request.GET.get("author"):
-        author = request.GET.get("author")
-        books = books.filter(author__contains=author)
-    if request.GET.get("publication_date_after"):
-        publication_date_after = request.GET.get("publication_date_after")
-        books = books.filter(publication_date__gte=publication_date_after)
-    if request.GET.get("publication_date_before"):
-        publication_date_before = request.GET.get("publication_date_before")
-        books = books.filter(publication_date__lte=publication_date_before)
+
+    for _ in request.GET:  # filtering api request
+        try:
+            title = request.GET.get("title")
+            books = books.filter(title__contains=title)
+        except ValueError:
+            pass
+        try:
+            author = request.GET.get("author")
+            books = books.filter(author__contains=author)
+        except ValueError:
+            pass
+        try:
+            publication_date_after = request.GET.get("publication_date_after")
+            books = books.filter(publication_date__gte=publication_date_after)
+        except ValueError:
+            pass
+        try:
+            publication_date_before = request.GET.get("publication_date_before")
+            books = books.filter(publication_date__lte=publication_date_before)
+        except ValueError:
+            pass
+
     serializer = BooksSerializer(books, many=True)
     print(serializer.data)
     return Response(serializer.data)
