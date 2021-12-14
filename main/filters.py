@@ -5,6 +5,10 @@ from django_filters import CharFilter, DateFilter
 
 
 class BooksFilter(django_filters.FilterSet):
+    """Books filter that enables filtering of Books with the title,
+    author, language and publication date range parameters.
+    """
+
     title = CharFilter(
         field_name="title",
         lookup_expr="contains",

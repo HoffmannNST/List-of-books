@@ -2,6 +2,13 @@ from django.db import models
 
 # Create your models here.
 class Books(models.Model):
+    """Books model that holds title, author, publication_date,
+    ISBN, page_count, front_page_link and language.
+
+    Returns:
+        str: all the held information
+    """
+
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=200)
     publication_date = models.DateField()
@@ -10,7 +17,7 @@ class Books(models.Model):
     front_page_link = models.URLField()
     language = models.CharField(max_length=40)
 
-    def __repr__(self):
+    def __str__(self):
         return "{}, {}, {}, {}, {}, {}, {}".format(
             self.title,
             self.author,

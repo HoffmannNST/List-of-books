@@ -2,17 +2,14 @@ import requests
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 from django.contrib import messages
-from rest_framework.serializers import Serializer
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from .forms import BookHandler, ImportBooks
 from .models import Books
 from .filters import BooksFilter
+from .serializers import BooksSerializer
 
 # Create your views here.
-
-
-def book_data(request, item_id):
-    book = Books.objects.get(id=item_id)
-    return render(request, "main/book_data.html", {"book": book})
 
 
 def list_of_books(request):
@@ -74,9 +71,9 @@ def edit(request, item_id):
 
         for errors in form.errors.values():  # validation error messages
             for error in errors:
-                if "au_short" == error:
+                if error == "au_short":
                     messages.error(request, "Imię i nazwisko autora są zbyt krótkie!")
-                elif "pc_small" == error:
+                elif error == "pc_small":
                     messages.error(request, "Liczba stron jest zbyt mała!")
         return HttpResponseRedirect("/edit/{}/".format(item_id))  # not valid
 
@@ -171,7 +168,7 @@ def import_books(request):
                 try:
                     _ = Books.objects.get(isbn=isbn_var)
                     messages.warning(request, "Wybrana książka jest już zapisana!")
-                except:
+                except KeyError:
                     try:
                         book = Books(
                             title=title_var,
@@ -189,7 +186,7 @@ def import_books(request):
                                 title_var, author_var
                             ),
                         )
-                    except:
+                    except KeyError:
                         messages.error(request, "Nie udało się dodać książki!")
                 return render(
                     request,
@@ -201,53 +198,46 @@ def import_books(request):
             return render(request, "main/import_books.html", {"form": form})
 
 
-# from rest_framework import viewsets
-# from .serializers import BooksSerializer
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .serializers import BooksSerializer
-
-# class HeroViewSet(viewsets.ModelViewSet):
-#     def get(self, request)
-#     queryset = Books.objects.all().order_by('title')
-#     serializer_class = BooksSerializer
-
-
 @api_view(["GET"])
-def apiOverview(request):
+def api_overview(_):
     api_urls = {"List": "/book-list/", "Detail View": "/book-detail/<str:pk>/"}
     return Response(api_urls)
 
 
 @api_view(["GET"])
-def bookList(request):
+def book_list(_):
     books = Books.objects.all().order_by("title")
     serializer = BooksSerializer(books, many=True)
     return Response(serializer.data)
 
 
 @api_view(["GET"])
-def bookDetail(request):
+def book_detail(request):
     books = Books.objects.all()
 
     for _ in request.GET:  # filtering api request
+        title = request.GET.get("title")
+        author = request.GET.get("author")
+        language = request.GET.get("language")
+        publication_date_after = request.GET.get("publication_date_after")
+        publication_date_before = request.GET.get("publication_date_before")
         try:
-            title = request.GET.get("title")
             books = books.filter(title__contains=title)
         except ValueError:
             pass
         try:
-            author = request.GET.get("author")
             books = books.filter(author__contains=author)
         except ValueError:
             pass
         try:
-            publication_date_after = request.GET.get("publication_date_after")
+            books = books.filter(language__contains=language)
+        except ValueError:
+            pass
+        try:
             books = books.filter(publication_date__gte=publication_date_after)
         except ValueError:
             pass
         try:
-            publication_date_before = request.GET.get("publication_date_before")
             books = books.filter(publication_date__lte=publication_date_before)
         except ValueError:
             pass
